@@ -15,14 +15,23 @@ Edge TTS 音频生成脚本
 """
 
 import asyncio
+import os
 import subprocess
 from pathlib import Path
 
 try:
     import edge_tts
+    import edge_tts.communicate
 except ImportError:
     print("❌ 请先安装 edge-tts: pip install edge-tts")
     exit(1)
+
+# 代理支持：edge-tts 不读取环境变量，需显式传入
+PROXY = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+
+# edge-tts 只信任 certifi 证书，额外加载 SSL_CERT_FILE（代理的 CA）
+if os.environ.get("SSL_CERT_FILE"):
+    edge_tts.communicate._SSL_CTX.load_verify_locations(cafile=os.environ["SSL_CERT_FILE"])
 
 # 场景配置
 SCENES = [
@@ -52,7 +61,7 @@ def get_audio_duration(file_path: Path) -> float:
 async def generate_audio(scene: dict, output_dir: Path) -> dict:
     """生成单个场景的音频"""
     output_file = output_dir / f"{scene['id']}.mp3"
-    communicate = edge_tts.Communicate(scene["text"], VOICE)
+    communicate = edge_tts.Communicate(scene["text"], VOICE, proxy=PROXY)
     await communicate.save(str(output_file))
 
     duration = get_audio_duration(output_file)
