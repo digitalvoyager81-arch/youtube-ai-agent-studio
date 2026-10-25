@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f6f68">
+<title>Семейная касса</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231f6f68'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23fff' stroke-width='7' stroke-dasharray='60 47'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231f6f68'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23fff' stroke-width='7' stroke-dasharray='60 47'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<style>
+/* Layout: two columns on desktop (month summary | form + purchases), one column on phones; tools below. */
+:root {
+  --bg: #f2f5f6;
+  --surface: #ffffff;
+  --surface-2: #f6f8f9;
+  --fg: #18242b;
+  --muted: #5b6a73;
+  --line: #dce3e7;
+  --accent: #1f6f68;
+  --accent-fg: #ffffff;
+  --accent-soft: #e2f0ee;
+  --danger: #b23a3a;
+  --danger-soft: #fbe9e8;
+  --warn-bg: #fff4dc;
+  --warn-fg: #6b4a00;
+  --warn-line: #e9c66f;
+  --up: #b4532a;
+  --down: #2e7d4f;
+  --ring-empty: #e5eaed;
+  --focus: #2f8f86;
+  --font-display: "Unbounded", "Onest", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --tap: 52px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171b; --surface: #182126; --surface-2: #1d272d; --fg: #e5ecef; --muted: #98a7af;
+    --line: #2a363d; --accent: #5cb8ad; --accent-fg: #0b1b19; --accent-soft: #1d3634;
+    --danger: #ec7f7a; --danger-soft: #3a2224; --warn-bg: #3a2f14; --warn-fg: #f3d58a; --warn-line: #7a6127;
+    --up: #ec9468; --down: #74c993; --ring-empty: #263238; --focus: #7fd3c8;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171b; --surface: #182126; --surface-2: #1d272d; --fg: #e5ecef; --muted: #98a7af;
+  --line: #2a363d; --accent: #5cb8ad; --accent-fg: #0b1b19; --accent-soft: #1d3634;
+  --danger: #ec7f7a; --danger-soft: #3a2224; --warn-bg: #3a2f14; --warn-fg: #f3d58a; --warn-line: #7a6127;
+  --up: #ec9468; --down: #74c993; --ring-empty: #263238; --focus: #7fd3c8;
+  color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { overflow-x: hidden; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: max(20px, env(safe-area-inset-top, 0px)) max(48px, env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.35rem; letter-spacing: -0.01em; }
+h2 { font-size: 1.12rem; font-weight: 700; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 0.9rem; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.top .sub { color: var(--muted); font-size: 0.95rem; }
+
+.grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) {
+  .grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
+  .col { display: grid; gap: 20px; min-width: 0; }
+  .tools { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+}
+.col, .tools { display: grid; gap: 20px; min-width: 0; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* Controls */
+button, .btn, input, select, textarea { font: inherit; font-size: 16px; }
+.btn {
+  min-height: var(--tap);
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--fg);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  text-align: center;
+  line-height: 1.2;
+  transition: border-color .15s;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.btn.ghost { background: transparent; }
+.btn.icon { width: var(--tap); padding: 0; flex: none; }
+.btn svg { width: 22px; height: 22px; flex: none; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-row > .btn { flex: 1 1 auto; }
+
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label, .label { font-weight: 600; font-size: 0.95rem; }
+input[type="text"], input[type="date"], input[inputmode], select, textarea {
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--fg);
+  min-width: 0;
+}
+input[type="date"] { -webkit-appearance: none; appearance: none; display: block; }
+textarea { min-height: 140px; resize: vertical; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 16px; }
+input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--danger); background: var(--danger-soft); }
+.form-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 520px) { .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .form-grid .wide { grid-column: 1 / -1; } }
+
+.errors { border-radius: var(--radius-sm); background: var(--danger-soft); color: var(--danger); padding: 12px 14px; font-weight: 500; }
+.errors ul { margin: 0; padding-left: 20px; }
+.notice { border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--fg); padding: 12px 14px; }
+.notice.bad { background: var(--danger-soft); color: var(--danger); }
+
+/* Storage warning */
+.warning {
+  border: 2px solid var(--warn-line);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: grid; gap: 12px;
+}
+.warning strong { font-size: 1.05rem; }
+
+/* Month switcher */
+.month-nav { display: flex; align-items: center; gap: 10px; }
+.month-nav .label-month { flex: 1; text-align: center; font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; min-width: 0; }
+.totals { display: grid; gap: 6px; }
+.total-sum { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.9rem, 6vw, 2.6rem); letter-spacing: -0.02em; line-height: 1.1; overflow-wrap: anywhere; }
+.compare { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 0.92rem; }
+.pill.up { color: var(--up); background: color-mix(in srgb, var(--up) 14%, transparent); }
+.pill.down { color: var(--down); background: color-mix(in srgb, var(--down) 14%, transparent); }
+.pill.same { color: var(--muted); background: var(--surface-2); }
+
+.examples { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--accent-soft); }
+.examples p { flex: 1 1 220px; }
+
+/* Donut */
+.chart-area { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); align-items: center; }
+@media (min-width: 560px) { .chart-area { grid-template-columns: 220px minmax(0, 1fr); } }
+.donut { position: relative; width: 100%; max-width: 240px; aspect-ratio: 1; margin: 0 auto; }
+.donut svg { width: 100%; height: 100%; display: block; }
+.donut-center { position: absolute; inset: 16%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2px; }
+.donut-center .v { font-family: var(--font-display); font-weight: 600; font-size: clamp(0.8rem, 3.4vw, 1rem); line-height: 1.15; white-space: nowrap; }
+.donut-center .c { font-size: 0.82rem; color: var(--muted); }
+
+.cat-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cat-row { display: grid; gap: 6px; }
+.cat-line { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.cat-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 500; }
+.cat-sum { font-weight: 700; white-space: nowrap; }
+.cat-pct { color: var(--muted); width: 3.8em; text-align: right; white-space: nowrap; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; display: inline-block; transform: translateY(1px); }
+.bar { height: 8px; border-radius: 999px; background: var(--ring-empty); overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 999px; }
+.check { font-size: 0.88rem; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.check.bad { color: var(--danger); font-weight: 600; }
+
+/* Purchases */
+.plist { list-style: none; margin: 0; padding: 0; display: grid; }
+.pitem { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.pitem:first-child { border-top: 0; }
+.pitem.editing { background: var(--accent-soft); border-radius: var(--radius-sm); padding-inline: 10px; }
+.pmain { flex: 1 1 180px; min-width: 0; display: grid; gap: 2px; }
+.pname { font-weight: 600; overflow-wrap: anywhere; }
+.pmeta { font-size: 0.9rem; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pmeta .dot { width: 10px; height: 10px; transform: none; }
+.pamount { font-weight: 700; white-space: nowrap; }
+.pactions { display: flex; gap: 8px; }
+.confirm { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px; border-radius: var(--radius-sm); background: var(--danger-soft); }
+.confirm p { flex: 1 1 200px; color: var(--danger); font-weight: 600; }
+.empty { padding: 18px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius-sm); }
+
+/* Categories manager */
+.cm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.cm-item { display: flex; align-items: center; gap: 12px; min-height: var(--tap); }
+.cm-item .cat-name { flex: 1; }
+.cm-count { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+.add-cat { display: flex; gap: 10px; flex-wrap: wrap; }
+.add-cat input { flex: 1 1 200px; }
+
+.file-label { position: relative; overflow: hidden; }
+.file-label input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+.file-label:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sep { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.code-hint { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9rem; background: var(--surface-2); padding: 2px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+
+.help summary { cursor: pointer; min-height: var(--tap); display: flex; align-items: center; list-style: none; }
+.help summary::-webkit-details-marker { display: none; }
+.help summary h2::after { content: " ▾"; color: var(--muted); }
+.help[open] summary h2::after { content: " ▴"; }
+.help ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 70ch; }
+.foot { text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Семейная касса</h1>
+      <p class="sub">Учёт расходов семьи. Записи хранятся только на этом устройстве</p>
+    </div>
+    <button class="btn ghost" id="theme-btn" type="button" aria-label="Переключить тему">Тема: авто</button>
+  </header>
+
+  <div class="warning" id="storage-warning" role="alert" hidden>
+    <strong>Браузер не сохраняет данные</strong>
+    <p>Хранилище браузера недоступно (например, приватный режим или запрет сайтов хранить данные). Записи пропадут, когда вы закроете страницу. Сохраните копию в CSV, а в следующий раз восстановите её внизу страницы.</p>
+    <div class="btn-row">
+      <button class="btn" type="button" data-action="copy-csv">Скопировать CSV</button>
+      <button class="btn" type="button" data-action="download-csv" hidden>Скачать CSV</button>
+    </div>
+  </div>
+
+  <div class="warning" id="backup-reminder" role="status" hidden>
+    <strong>Пора сохранить копию</strong>
+    <p id="backup-text"></p>
+    <div class="btn-row">
+      <button class="btn" type="button" data-action="copy-csv">Скопировать CSV</button>
+      <button class="btn" type="button" data-action="download-csv" hidden>Скачать CSV</button>
+    </div>
+  </div>
+
+  <main class="grid">
+    <div class="col">
+      <section class="card" aria-labelledby="month-title">
+        <div class="month-nav">
+          <button class="btn icon" type="button" id="prev-month" aria-label="Предыдущий месяц">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <h2 class="label-month" id="month-title">—</h2>
+          <button class="btn icon" type="button" id="next-month" aria-label="Следующий месяц">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+        <button class="btn" type="button" id="today-month" hidden>Вернуться к текущему месяцу</button>
+
+        <div class="totals">
+          <span class="muted small">Расходы за месяц</span>
+          <div class="total-sum num" id="total-sum">0 ₽</div>
+          <div class="compare" id="compare"></div>
+        </div>
+
+        <div class="examples" id="examples-bar" hidden>
+          <p>Сейчас показаны примеры расходов, чтобы было видно, как всё работает.</p>
+          <button class="btn" type="button" id="remove-examples">Убрать примеры</button>
+        </div>
+
+        <div class="chart-area">
+          <div class="donut" id="donut"></div>
+          <div style="display:grid;gap:12px;min-width:0">
+            <ul class="cat-list" id="cat-summary"></ul>
+            <div class="check" id="check"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card" aria-labelledby="form-title">
+        <div class="card-head">
+          <h2 id="form-title">Новая покупка</h2>
+        </div>
+        <form id="purchase-form" novalidate>
+          <div class="form-grid">
+            <div class="field wide">
+              <label for="f-name">Название</label>
+              <input type="text" id="f-name" autocomplete="off" placeholder="Например, продукты на неделю" maxlength="120">
+            </div>
+            <div class="field">
+              <label for="f-amount">Сумма, ₽</label>
+              <input type="text" id="f-amount" inputmode="decimal" autocomplete="off" placeholder="1 250,50">
+            </div>
+            <div class="field">
+              <label for="f-date">Дата</label>
+              <input type="date" id="f-date">
+            </div>
+            <div class="field wide">
+              <label for="f-cat">Категория</label>
+              <select id="f-cat"></select>
+            </div>
+          </div>
+          <div class="errors" id="form-errors" role="alert" hidden style="margin-top:14px"></div>
+          <div class="btn-row" style="margin-top:16px">
+            <button class="btn primary" type="submit" id="submit-btn">Добавить покупку</button>
+            <button class="btn" type="button" id="cancel-edit" hidden>Отменить изменение</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="list-title">
+        <div class="card-head">
+          <h2 id="list-title">Покупки месяца</h2>
+          <span class="muted small" id="list-count"></span>
+        </div>
+        <ul class="plist" id="purchase-list"></ul>
+      </section>
+    </div>
+
+    <div class="tools">
+      <section class="card" aria-labelledby="cats-title">
+        <h2 id="cats-title">Категории</h2>
+        <ul class="cm-list" id="cat-manage"></ul>
+        <hr class="sep">
+        <form class="add-cat" id="cat-form" novalidate>
+          <label class="label" for="new-cat" style="flex-basis:100%">Новая категория</label>
+          <input type="text" id="new-cat" autocomplete="off" maxlength="40" placeholder="Например, подарки">
+          <button class="btn primary" type="submit">Добавить</button>
+        </form>
+        <div class="errors" id="cat-errors" role="alert" hidden></div>
+        <p class="muted small">Удалить можно только категорию, в которой нет ни одной покупки.</p>
+      </section>
+
+      <section class="card" aria-labelledby="backup-title">
+        <h2 id="backup-title">Копия и восстановление</h2>
+        <p class="muted small">Все покупки за все месяцы в формате <span class="code-hint">Дата;Название;Сумма;Категория</span>. Файл в кодировке UTF-8 с BOM, Excel откроет русский текст правильно.</p>
+        <div class="btn-row">
+          <button class="btn primary" type="button" data-action="download-csv" hidden>Скачать CSV</button>
+          <button class="btn" type="button" data-action="copy-csv">Скопировать CSV</button>
+        </div>
+        <p class="muted small" id="download-note" hidden>Скачивание файла здесь недоступно. Нажмите «Скопировать CSV», вставьте текст в Блокнот и сохраните его с расширением .csv.</p>
+        <div class="notice" id="export-msg" role="status" hidden></div>
+        <div class="field" id="copy-fallback" hidden>
+          <label for="copy-text">Выделите текст и скопируйте его вручную</label>
+          <textarea id="copy-text" readonly></textarea>
+        </div>
+
+        <hr class="sep">
+        <h3 class="label">Восстановить из CSV</h3>
+        <p class="muted small">Покупки, которые уже есть, повторно не добавятся. Недостающие категории будут созданы.</p>
+        <label class="btn file-label" for="import-file">Загрузить файл CSV
+          <input type="file" id="import-file" accept=".csv,text/csv,text/plain">
+        </label>
+        <div class="field">
+          <label for="import-text">Или вставьте текст CSV</label>
+          <textarea id="import-text" placeholder="Дата;Название;Сумма;Категория&#10;2026-10-01;Хлеб;65,50;Продукты"></textarea>
+        </div>
+        <button class="btn" type="button" id="import-btn">Восстановить из текста</button>
+        <div class="notice" id="import-msg" role="status" hidden></div>
+      </section>
+    </div>
+  </main>
+
+  <details class="card help" id="help">
+    <summary><h2>Как пользоваться</h2></summary>
+    <ol>
+      <li>Нажмите «Убрать примеры», чтобы начать со своих записей.</li>
+      <li>Добавляйте покупки в форме «Новая покупка»: название, сумма, дата и категория. Сумму можно писать как 1250, 1 250,50 или 1250.5.</li>
+      <li>Стрелками вверху листайте месяцы. Итог, сравнение с прошлым месяцем и диаграмма пересчитываются сами.</li>
+      <li>Чтобы изменить или удалить покупку, нажмите карандаш или корзину в её строке.</li>
+      <li>Свои категории добавляются внизу страницы. Пустую категорию можно удалить.</li>
+      <li>Раз в месяц сохраняйте копию: «Скачать CSV» или «Скопировать CSV». Файл открывается в Excel.</li>
+    </ol>
+    <p class="muted small">Записи хранятся в браузере на этом устройстве и никуда не отправляются. Если очистить данные браузера, открыть файл в другом браузере или переместить его в другую папку, записи могут не найтись. Тогда восстановите их из сохранённой копии CSV.</p>
+  </details>
+
+  <footer class="foot muted small">Семейная касса · версия 1.0</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORE_KEY = "semeynaya-kassa-v1";
+  const THEME_KEY = "semeynaya-kassa-theme";
+  const BACKUP_KEY = "semeynaya-kassa-backup";
+  const BACKUP_DAYS = 30;
+  const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+  const MONTHS_GEN = ["янв.","февр.","марта","апр.","мая","июня","июля","авг.","сент.","окт.","нояб.","дек."];
+  const PALETTE = ["#3e9e6e","#4c7bd9","#e08a3c","#8a63d2","#cf9f22","#d2556a","#2ba3b5","#d763b4","#8c96a3",
+                   "#6e8b3d","#b5694a","#5868a8","#3f8f9e","#a0527a","#9a8a2e","#c0503a","#4f9a8a","#7c6bb0"];
+  const DEFAULT_CATS = [
+    ["food","Продукты"],["home","Жильё"],["kids","Дети"],["transport","Транспорт"],["edu","Воспитание"],
+    ["credit","Кредиты"],["health","Здоровье"],["fun","Развлечения"],["other","Другое"]
+  ];
+
+  /* ---------- Pure helpers: dates and money ---------- */
+  const pad = (n) => String(n).padStart(2, "0");
+  function todayStr() { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function daysInMonth(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+  function isValidDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
+    if (!m) return false;
+    const y = +m[1], mo = +m[2], d = +m[3];
+    return y >= 1900 && y <= 2100 && mo >= 1 && mo <= 12 && d >= 1 && d <= daysInMonth(y, mo);
+  }
+  function monthOf(dateStr) { return dateStr.slice(0, 7); }
+  function shiftMonth(ym, delta) {
+    let y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1 + delta;
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    return y + "-" + pad(m + 1);
+  }
+  function monthLabel(ym) { return MONTHS[+ym.slice(5, 7) - 1] + " " + ym.slice(0, 4); }
+  function dayLabel(d) { return +d.slice(8, 10) + " " + MONTHS_GEN[+d.slice(5, 7) - 1] + " " + d.slice(0, 4); }
+
+  // Accepts "1250", "1 250,50", "1250.5". Returns {kop} or {error}.
+  function parseAmount(raw) {
+    let s = String(raw == null ? "" : raw).replace(/[\s  ]/g, "").replace(/₽$|руб\.?$|р\.?$/i, "");
+    if (!s) return { error: "empty" };
+    s = s.replace(",", ".");
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return { error: "format" };
+    const parts = s.split(".");
+    const rub = parts[0].replace(/^0+(?=\d)/, "");
+    if (rub.length > 11) return { error: "big" };
+    const kop = Number(rub) * 100 + Number(((parts[1] || "") + "00").slice(0, 2));
+    if (!Number.isSafeInteger(kop)) return { error: "big" };
+    if (kop <= 0) return { error: "zero" };
+    return { kop };
+  }
+  const groupFmt = new Intl.NumberFormat("ru-RU");
+  function money(kop) {
+    const neg = kop < 0; kop = Math.abs(kop);
+    const rub = Math.floor(kop / 100), k = kop % 100;
+    return (neg ? "−" : "") + groupFmt.format(rub) + (k ? "," + pad(k) : "") + " ₽";
+  }
+  function csvAmount(kop) { return Math.floor(kop / 100) + "," + pad(kop % 100); }
+  function pctText(x) { return (Math.round(x * 10) / 10).toLocaleString("ru-RU", { maximumFractionDigits: 1 }) + " %"; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+  function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  const norm = (s) => String(s).trim().replace(/\s+/g, " ").toLowerCase();
+
+  /* ---------- Storage ---------- */
+  let storageOk = true;
+  function storageAvailable() {
+    try { const k = "__fb_test__"; localStorage.setItem(k, "1"); localStorage.removeItem(k); return true; }
+    catch (e) { return false; }
+  }
+  function loadState() {
+    try { const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; }
+    catch (e) { return null; }
+  }
+  function saveState() {
+    if (!storageOk) return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, categories: state.categories, purchases: state.purchases })); }
+    catch (e) { storageOk = false; showStorageWarning(); }
+  }
+  function showStorageWarning() { $("storage-warning").hidden = false; }
+
+  function defaultCategories() { return DEFAULT_CATS.map(([id, name], i) => ({ id, name, color: PALETTE[i] })); }
+  function examplePurchases() {
+    const t = todayStr(), cur = monthOf(t), prev = shiftMonth(cur, -1), today = +t.slice(8, 10);
+    const dCur = (d) => cur + "-" + pad(Math.min(d, today));
+    const dPrev = (d) => prev + "-" + pad(Math.min(d, daysInMonth(+prev.slice(0, 4), +prev.slice(5, 7))));
+    const rows = [
+      [dCur(2), "Продукты на неделю", 345080, "food"],
+      [dCur(3), "Коммунальные платежи", 682000, "home"],
+      [dCur(5), "Кружок рисования", 240000, "kids"],
+      [dCur(6), "Бензин", 295000, "transport"],
+      [dCur(10), "Платёж по ипотеке", 1850000, "credit"],
+      [dCur(11), "Аптека", 112050, "health"],
+      [dCur(12), "Кино всей семьёй", 180000, "fun"],
+      [dCur(14), "Рынок: овощи и фрукты", 126000, "food"],
+      [dCur(15), "Книги для школы", 89000, "edu"],
+      [dPrev(3), "Продукты за месяц", 980000, "food"],
+      [dPrev(4), "Коммунальные платежи", 654000, "home"],
+      [dPrev(10), "Платёж по ипотеке", 1850000, "credit"],
+      [dPrev(12), "Проездные", 310000, "transport"],
+      [dPrev(15), "Кружок рисования", 240000, "kids"],
+      [dPrev(20), "Аквапарк", 260000, "fun"]
+    ];
+    return rows.map(([date, name, amount, catId]) => ({ id: uid("p"), date, name, amount, catId, example: true }));
+  }
+  function sanitize(s) {
+    if (!s || !Array.isArray(s.categories) || !Array.isArray(s.purchases)) return null;
+    const categories = s.categories.filter((c) => c && typeof c.id === "string" && typeof c.name === "string" && c.name.trim())
+      .map((c) => ({ id: c.id, name: c.name, color: typeof c.color === "string" ? c.color : PALETTE[8] }));
+    const ids = new Set(categories.map((c) => c.id));
+    const purchases = s.purchases.filter((p) => p && typeof p.name === "string" && Number.isSafeInteger(p.amount) && p.amount > 0 && isValidDate(p.date) && ids.has(p.catId))
+      .map((p) => ({ id: typeof p.id === "string" ? p.id : uid("p"), name: p.name, amount: p.amount, date: p.date, catId: p.catId, example: !!p.example }));
+    return { categories, purchases };
+  }
+
+  /* ---------- State ---------- */
+  const $ = (id) => document.getElementById(id);
+  storageOk = storageAvailable();
+  const saved = storageOk ? sanitize(loadState()) : null;
+  const state = saved || { categories: defaultCategories(), purchases: examplePurchases() };
+  let viewMonth = monthOf(todayStr());
+  let editingId = null;
+  let confirmId = null;
+  if (!storageOk) showStorageWarning();
+  if (!saved) saveState();
+
+  const catById = (id) => state.categories.find((c) => c.id === id);
+  function nextColor() {
+    const used = new Set(state.categories.map((c) => c.color.toLowerCase()));
+    return PALETTE.find((c) => !used.has(c)) || PALETTE[state.categories.length % PALETTE.length];
+  }
+
+  /* ---------- Calculations ---------- */
+  function monthStats(ym) {
+    const items = state.purchases.filter((p) => monthOf(p.date) === ym);
+    const byCat = new Map();
+    let total = 0;
+    for (const p of items) { total += p.amount; byCat.set(p.catId, (byCat.get(p.catId) || 0) + p.amount); }
+    const cats = [...byCat.entries()].map(([id, sum]) => ({ cat: catById(id), sum }))
+      .filter((x) => x.cat).sort((a, b) => b.sum - a.sum);
+    const catSum = cats.reduce((s, x) => s + x.sum, 0);
+    return { items, total, cats, catSum };
+  }
+
+  /* ---------- Rendering ---------- */
+  function renderSummary() {
+    const cur = monthOf(todayStr());
+    $("month-title").textContent = monthLabel(viewMonth);
+    $("today-month").hidden = viewMonth === cur;
+
+    const st = monthStats(viewMonth);
+    const prev = monthStats(shiftMonth(viewMonth, -1));
+    $("total-sum").textContent = money(st.total);
+
+    const cmp = $("compare");
+    const prevName = MONTHS[+shiftMonth(viewMonth, -1).slice(5, 7) - 1].toLowerCase();
+    if (prev.total === 0) {
+      cmp.innerHTML = "<span>В прошлом месяце (" + esc(prevName) + ") расходов не было, сравнивать не с чем.</span>";
+    } else {
+      const diff = st.total - prev.total;
+      const pct = (diff / prev.total) * 100;
+      let pill;
+      if (diff === 0) pill = '<span class="pill same">0 %</span>';
+      else if (diff > 0) pill = '<span class="pill up">▲ +' + pctText(pct) + "</span>";
+      else pill = '<span class="pill down">▼ −' + pctText(-pct) + "</span>";
+      const word = diff === 0 ? "столько же, сколько" : diff > 0 ? "больше, чем" : "меньше, чем";
+      cmp.innerHTML = pill + "<span>" + word + " в прошлом месяце (" + esc(prevName) + ": <span class=\"num\">" + money(prev.total) + "</span>)</span>";
+    }
+
+    $("examples-bar").hidden = !state.purchases.some((p) => p.example);
+
+    renderDonut(st);
+
+    const list = $("cat-summary");
+    if (!st.cats.length) {
+      list.innerHTML = '<li class="empty">В этом месяце покупок нет. Добавьте первую в форме «Новая покупка».</li>';
+    } else {
+      list.innerHTML = st.cats.map((x) => {
+        const share = (x.sum / st.total) * 100;
+        return '<li class="cat-row"><div class="cat-line"><span class="dot" style="background:' + esc(x.cat.color) + '"></span>' +
+          '<span class="cat-name">' + esc(x.cat.name) + '</span><span class="cat-sum num">' + money(x.sum) + '</span>' +
+          '<span class="cat-pct num">' + pctText(share) + '</span></div>' +
+          '<div class="bar" role="presentation"><span style="width:' + share.toFixed(2) + "%;background:" + esc(x.cat.color) + '"></span></div></li>';
+      }).join("");
+    }
+
+    const check = $("check");
+    if (st.total === st.catSum) {
+      check.className = "check";
+      check.textContent = st.total ? "✓ Проверка: итог месяца равен сумме категорий" : "";
+    } else {
+      check.className = "check bad";
+      check.textContent = "Ошибка расчёта: итог " + money(st.total) + " не равен сумме категорий " + money(st.catSum);
+    }
+  }
+
+  function renderDonut(st) {
+    const R = 80, SW = 26, C = 2 * Math.PI * R;
+    let parts = '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="var(--ring-empty)" stroke-width="' + SW + '"/>';
+    if (st.total > 0) {
+      const gap = st.cats.length > 1 ? 2 : 0;
+      let offset = 0;
+      for (const x of st.cats) {
+        const len = (x.sum / st.total) * C;
+        const draw = Math.max(len - gap, 0.6);
+        parts += '<circle cx="100" cy="100" r="' + R + '" fill="none" stroke="' + esc(x.cat.color) + '" stroke-width="' + SW +
+          '" stroke-dasharray="' + draw.toFixed(3) + " " + (C - draw).toFixed(3) + '" stroke-dashoffset="' + (-offset).toFixed(3) +
+          '" transform="rotate(-90 100 100)"><title>' + esc(x.cat.name) + ": " + esc(money(x.sum)) + "</title></circle>";
+        offset += len;
+      }
+    }
+    const label = st.cats.map((x) => x.cat.name + " " + money(x.sum)).join(", ");
+    $("donut").innerHTML = '<svg viewBox="0 0 200 200" role="img" aria-label="Диаграмма расходов: ' + esc(label || "нет расходов") + '">' + parts + "</svg>" +
+      '<div class="donut-center"><span class="v num">' + money(st.total) + '</span><span class="c">за месяц</span></div>';
+  }
+
+  function renderList() {
+    const items = state.purchases.filter((p) => monthOf(p.date) === viewMonth)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    $("list-count").textContent = items.length ? items.length + " " + plural(items.length, ["покупка", "покупки", "покупок"]) : "";
+    const ul = $("purchase-list");
+    if (!items.length) { ul.innerHTML = '<li class="empty">Покупок за ' + esc(monthLabel(viewMonth).toLowerCase()) + " нет.</li>"; return; }
+    ul.innerHTML = items.map((p) => {
+      const c = catById(p.catId);
+      let html = '<li class="pitem' + (p.id === editingId ? " editing" : "") + '" data-id="' + esc(p.id) + '">' +
+        '<div class="pmain"><span class="pname">' + esc(p.name) + (p.example ? ' <span class="muted small">(пример)</span>' : "") + "</span>" +
+        '<span class="pmeta"><span>' + dayLabel(p.date) + '</span><span class="dot" style="background:' + esc(c.color) + '"></span><span>' + esc(c.name) + "</span></span></div>" +
+        '<span class="pamount num">' + money(p.amount) + "</span>" +
+        '<div class="pactions">' +
+        '<button class="btn icon" type="button" data-act="edit" aria-label="Изменить «' + esc(p.name) + '»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>' +
+        '<button class="btn icon" type="button" data-act="ask-delete" aria-label="Удалить «' + esc(p.name) + '»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>' +
+        "</div>";
+      if (p.id === confirmId) {
+        html += '<div class="confirm"><p>Удалить покупку «' + esc(p.name) + "» на " + money(p.amount) + "?</p>" +
+          '<button class="btn danger" type="button" data-act="delete">Удалить</button>' +
+          '<button class="btn" type="button" data-act="cancel-delete">Отмена</button></div>';
+      }
+      return html + "</li>";
+    }).join("");
+  }
+
+  function plural(n, f) {
+    const a = n % 10, b = n % 100;
+    return a === 1 && b !== 11 ? f[0] : a >= 2 && a <= 4 && (b < 12 || b > 14) ? f[1] : f[2];
+  }
+
+  function renderCategorySelect() {
+    const sel = $("f-cat"), prevVal = sel.value;
+    sel.innerHTML = state.categories.map((c) => '<option value="' + esc(c.id) + '">' + esc(c.name) + "</option>").join("");
+    if (state.categories.some((c) => c.id === prevVal)) sel.value = prevVal;
+  }
+
+  function renderCategoryManager() {
+    const counts = new Map();
+    for (const p of state.purchases) counts.set(p.catId, (counts.get(p.catId) || 0) + 1);
+    $("cat-manage").innerHTML = state.categories.map((c) => {
+      const n = counts.get(c.id) || 0;
+      return '<li class="cm-item"><span class="dot" style="background:' + esc(c.color) + '"></span><span class="cat-name">' + esc(c.name) + "</span>" +
+        '<span class="cm-count">' + (n ? n + " " + plural(n, ["покупка", "покупки", "покупок"]) : "нет покупок") + "</span>" +
+        (n ? "" : '<button class="btn icon" type="button" data-cat-del="' + esc(c.id) + '" aria-label="Удалить категорию «' + esc(c.name) + '»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>') +
+        "</li>";
+    }).join("");
+  }
+
+  function renderAll() { renderSummary(); renderList(); renderCategorySelect(); renderCategoryManager(); renderBackupReminder(); }
+
+  /* ---------- Purchase form ---------- */
+  function resetForm() {
+    editingId = null;
+    $("f-name").value = ""; $("f-amount").value = "";
+    $("f-date").value = defaultDateForView();
+    $("form-title").textContent = "Новая покупка";
+    $("submit-btn").textContent = "Добавить покупку";
+    $("cancel-edit").hidden = true;
+    clearErrors();
+  }
+  function defaultDateForView() {
+    const t = todayStr();
+    return monthOf(t) === viewMonth ? t : viewMonth + "-01";
+  }
+  function clearErrors() {
+    $("form-errors").hidden = true; $("form-errors").innerHTML = "";
+    ["f-name", "f-amount", "f-date", "f-cat"].forEach((id) => $(id).removeAttribute("aria-invalid"));
+  }
+  function validateForm() {
+    const errors = [];
+    const name = $("f-name").value.trim().replace(/\s+/g, " ");
+    if (!name) errors.push(["f-name", "Укажите название покупки."]);
+    const a = parseAmount($("f-amount").value);
+    if (a.error === "empty") errors.push(["f-amount", "Укажите сумму покупки."]);
+    else if (a.error === "zero") errors.push(["f-amount", "Сумма должна быть больше нуля."]);
+    else if (a.error === "big") errors.push(["f-amount", "Сумма слишком большая. Проверьте число."]);
+    else if (a.error) errors.push(["f-amount", "Сумма записана неверно. Подойдёт, например, 1250, 1 250,50 или 1250.5 (не больше двух знаков после запятой)."]);
+    const date = $("f-date").value;
+    if (!date) errors.push(["f-date", "Укажите дату покупки."]);
+    else if (!isValidDate(date)) errors.push(["f-date", "Дата указана неверно. Выберите её в календаре."]);
+    const catId = $("f-cat").value;
+    if (!catById(catId)) errors.push(["f-cat", "Выберите категорию."]);
+    return { errors, value: { name, amount: a.kop, date, catId } };
+  }
+
+  $("purchase-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    clearErrors();
+    const { errors, value } = validateForm();
+    if (errors.length) {
+      errors.forEach(([id]) => $(id).setAttribute("aria-invalid", "true"));
+      $("form-errors").innerHTML = "<ul>" + errors.map(([, m]) => "<li>" + esc(m) + "</li>").join("") + "</ul>";
+      $("form-errors").hidden = false;
+      $(errors[0][0]).focus();
+      return;
+    }
+    if (editingId) {
+      const p = state.purchases.find((x) => x.id === editingId);
+      if (p) Object.assign(p, value, { example: false });
+    } else {
+      state.purchases.push(Object.assign({ id: uid("p") }, value));
+    }
+    viewMonth = monthOf(value.date);
+    confirmId = null;
+    const keepCat = value.catId;
+    saveState();
+    resetForm();
+    renderAll();
+    $("f-cat").value = keepCat;
+    $("f-name").focus();
+  });
+  $("cancel-edit").addEventListener("click", () => { resetForm(); renderList(); });
+
+  $("purchase-list").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]");
+    if (!btn) return;
+    const id = btn.closest(".pitem").dataset.id;
+    const p = state.purchases.find((x) => x.id === id);
+    if (!p) return;
+    const act = btn.dataset.act;
+    if (act === "edit") {
+      editingId = id; confirmId = null; clearErrors();
+      $("f-name").value = p.name;
+      $("f-amount").value = csvAmount(p.amount).replace(/,00$/, "");
+      $("f-date").value = p.date;
+      $("f-cat").value = p.catId;
+      $("form-title").textContent = "Изменить покупку";
+      $("submit-btn").textContent = "Сохранить изменения";
+      $("cancel-edit").hidden = false;
+      renderList();
+      $("purchase-form").scrollIntoView({ behavior: "smooth", block: "start" });
+      $("f-name").focus({ preventScroll: true });
+    } else if (act === "ask-delete") {
+      confirmId = id; renderList();
+      const b = document.querySelector('.pitem[data-id="' + CSS.escape(id) + '"] [data-act="cancel-delete"]');
+      if (b) b.focus();
+    } else if (act === "cancel-delete") {
+      confirmId = null; renderList();
+    } else if (act === "delete") {
+      state.purchases = state.purchases.filter((x) => x.id !== id);
+      confirmId = null;
+      if (editingId === id) resetForm();
+      saveState(); renderAll();
+    }
+  });
+
+  /* ---------- Month navigation ---------- */
+  function setMonth(ym) {
+    viewMonth = ym; confirmId = null;
+    if (!editingId) $("f-date").value = defaultDateForView();
+    renderSummary(); renderList();
+  }
+  $("prev-month").addEventListener("click", () => setMonth(shiftMonth(viewMonth, -1)));
+  $("next-month").addEventListener("click", () => setMonth(shiftMonth(viewMonth, 1)));
+  $("today-month").addEventListener("click", () => setMonth(monthOf(todayStr())));
+
+  $("remove-examples").addEventListener("click", () => {
+    state.purchases = state.purchases.filter((p) => !p.example);
+    if (editingId && !state.purchases.some((p) => p.id === editingId)) resetForm();
+    confirmId = null;
+    saveState(); renderAll();
+  });
+
+  /* ---------- Categories ---------- */
+  function showCatError(msg) { const el = $("cat-errors"); el.textContent = msg; el.hidden = !msg; $("new-cat").setAttribute("aria-invalid", msg ? "true" : "false"); }
+  $("cat-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("new-cat").value.trim().replace(/\s+/g, " ");
+    if (!name) return showCatError("Введите название категории.");
+    if (state.categories.some((c) => norm(c.name) === norm(name))) return showCatError("Категория «" + name + "» уже есть.");
+    const c = { id: uid("c"), name, color: nextColor() };
+    state.categories.push(c);
+    $("new-cat").value = ""; showCatError("");
+    saveState(); renderAll();
+  });
+  $("cat-manage").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-cat-del]");
+    if (!btn) return;
+    const id = btn.dataset.catDel;
+    if (state.purchases.some((p) => p.catId === id)) return;
+    state.categories = state.categories.filter((c) => c.id !== id);
+    saveState(); renderAll();
+  });
+
+  /* ---------- CSV export ---------- */
+  function csvField(s) { s = String(s); return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+  function buildCSV() {
+    const rows = state.purchases.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    const lines = ["Дата;Название;Сумма;Категория"];
+    for (const p of rows) lines.push([p.date, p.name, csvAmount(p.amount), catById(p.catId).name].map(csvField).join(";"));
+    return lines.join("\r\n") + "\r\n";
+  }
+  function exportMsg(text, bad) { const el = $("export-msg"); el.textContent = text; el.className = "notice" + (bad ? " bad" : ""); el.hidden = !text; }
+  function daysBetween(a, b) {
+    const t = (d) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
+    return Math.round((t(b) - t(a)) / 86400000);
+  }
+  function lastBackup() { try { const v = localStorage.getItem(BACKUP_KEY); return isValidDate(v) ? v : null; } catch (e) { return null; } }
+  function markBackup() { try { localStorage.setItem(BACKUP_KEY, todayStr()); } catch (e) {} renderBackupReminder(); }
+  function renderBackupReminder() {
+    const own = state.purchases.filter((p) => !p.example).length;
+    const last = lastBackup();
+    const due = storageOk && own > 0 && (!last || daysBetween(last, todayStr()) >= BACKUP_DAYS);
+    $("backup-reminder").hidden = !due;
+    if (due) $("backup-text").textContent = (last ? "Последняя копия была " + dayLabel(last) + "." : "Вы ещё ни разу не сохраняли копию.") +
+      " Если очистить данные браузера или сменить телефон, записи пропадут. Копия в CSV поможет их восстановить.";
+  }
+  function fileName() { return "semeynaya-kassa-" + todayStr() + ".csv"; }
+
+  async function copyCSV() {
+    const csv = buildCSV();
+    $("copy-fallback").hidden = true;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error("no clipboard");
+      await navigator.clipboard.writeText(csv);
+      markBackup();
+      exportMsg("CSV скопирован: " + state.purchases.length + " " + plural(state.purchases.length, ["покупка", "покупки", "покупок"]) + ". Вставьте текст в файл и сохраните его с расширением .csv.");
+    } catch (e) {
+      const ta = $("copy-text");
+      ta.value = csv;
+      $("copy-fallback").hidden = false;
+      exportMsg("Браузер не дал скопировать автоматически. Текст CSV показан ниже и уже выделен: скопируйте его вручную.", true);
+      ta.focus(); ta.select();
+      ta.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  // Download: in the Claude viewer via the downloads capability, in a standalone tab via a link.
+  let downloader = null;
+  function setDownloadVisible(on) {
+    document.querySelectorAll('[data-action="download-csv"]').forEach((b) => { b.hidden = !on; });
+    $("download-note").hidden = on;
+  }
+  async function initDownload() {
+    setDownloadVisible(false);
+    if (window.claude && typeof window.claude.use === "function") {
+      let dl = null;
+      try { dl = await window.claude.use("downloads"); } catch (e) { dl = null; }
+      if (dl) {
+        downloader = async () => {
+          try {
+            await dl.save({ filename: fileName(), data: "﻿" + buildCSV() });
+            markBackup();
+            exportMsg("Файл " + fileName() + " сохранён.");
+          } catch (err) {
+            const code = err && err.code;
+            if (code === "declined") exportMsg("Сохранение файла отменено.");
+            else if (code === "rate_limited") exportMsg("Окно сохранения уже открыто. Подтвердите или закройте его и попробуйте снова.", true);
+            else { setDownloadVisible(false); exportMsg("Скачивание здесь недоступно. Используйте «Скопировать CSV».", true); }
+          }
+        };
+        setDownloadVisible(true);
+      }
+      return;
+    }
+    let topLevel = false;
+    try { topLevel = window.top === window.self; } catch (e) { topLevel = false; }
+    if (topLevel && "download" in HTMLAnchorElement.prototype && window.Blob && window.URL && URL.createObjectURL) {
+      downloader = async () => {
+        const blob = new Blob(["﻿" + buildCSV()], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = fileName();
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        markBackup();
+        exportMsg("Файл " + fileName() + " скачивается.");
+      };
+      setDownloadVisible(true);
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-action]");
+    if (!b) return;
+    if (b.dataset.action === "copy-csv") copyCSV();
+    else if (b.dataset.action === "download-csv" && downloader) downloader();
+  });
+
+  /* ---------- CSV import ---------- */
+  function detectDelimiter(text) {
+    const first = text.split(/\r?\n/).find((l) => l.trim()) || "";
+    if (first.includes(";")) return ";";
+    if (first.includes("\t")) return "\t";
+    return ",";
+  }
+  function parseCSV(text, d) {
+    const rows = []; let row = [], field = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+        else field += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === d) { row.push(field); field = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); rows.push(row); row = []; field = "";
+      } else field += ch;
+    }
+    if (field !== "" || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  }
+  function parseImportDate(s) {
+    s = s.trim();
+    let m = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(s);
+    if (m) s = m[3] + "-" + pad(+m[2]) + "-" + pad(+m[1]);
+    m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+    if (m) s = m[1] + "-" + pad(+m[2]) + "-" + pad(+m[3]);
+    return isValidDate(s) ? s : null;
+  }
+  const dupKey = (date, name, amount, catName) => date + "|" + norm(name) + "|" + amount + "|" + norm(catName);
+
+  function importCSV(text) {
+    text = String(text || "").replace(/^﻿/, "");
+    if (!text.trim()) return { error: "Текст пустой. Вставьте содержимое CSV или выберите файл." };
+    const rows = parseCSV(text, detectDelimiter(text)).filter((r) => r.some((c) => c.trim()));
+    if (rows.length && norm(rows[0][0] || "") === "дата") rows.shift();
+    if (!rows.length) return { error: "В тексте нет строк с покупками." };
+
+    // Count-based duplicate check: a row is added only if the file has more copies than already exist.
+    const have = new Map();
+    for (const p of state.purchases) { const k = dupKey(p.date, p.name, p.amount, catById(p.catId).name); have.set(k, (have.get(k) || 0) + 1); }
+    const seen = new Map();
+    let added = 0, dups = 0; const bad = []; const newCats = [];
+    rows.forEach((r, i) => {
+      const line = i + 2;
+      const date = parseImportDate(r[0] || "");
+      const name = (r[1] || "").trim().replace(/\s+/g, " ");
+      const a = parseAmount(r[2] || "");
+      const catName = ((r[3] || "").trim().replace(/\s+/g, " ")) || "Другое";
+      if (!date || !name || a.error) { bad.push(line); return; }
+      const k = dupKey(date, name, a.kop, catName);
+      const n = (seen.get(k) || 0) + 1; seen.set(k, n);
+      if (n <= (have.get(k) || 0)) { dups++; return; }
+      let cat = state.categories.find((c) => norm(c.name) === norm(catName));
+      if (!cat) { cat = { id: uid("c"), name: catName, color: nextColor() }; state.categories.push(cat); newCats.push(catName); }
+      state.purchases.push({ id: uid("p"), date, name, amount: a.kop, catId: cat.id });
+      added++;
+    });
+    return { added, dups, bad, newCats };
+  }
+  function importReport(res) {
+    const el = $("import-msg");
+    if (res.error) { el.textContent = res.error; el.className = "notice bad"; el.hidden = false; return; }
+    const parts = ["Добавлено покупок: " + res.added + "."];
+    if (res.dups) parts.push("Уже были и пропущены: " + res.dups + ".");
+    if (res.newCats.length) parts.push("Созданы категории: " + res.newCats.join(", ") + ".");
+    if (res.bad.length) parts.push("Не удалось прочитать строки: " + res.bad.slice(0, 12).join(", ") + (res.bad.length > 12 ? "…" : "") + ". Проверьте дату (ГГГГ-ММ-ДД), название и сумму.");
+    el.textContent = parts.join(" ");
+    el.className = "notice" + (res.added === 0 && res.bad.length ? " bad" : "");
+    el.hidden = false;
+    if (res.added) {
+      saveState();
+      const last = state.purchases[state.purchases.length - 1];
+      viewMonth = monthOf(last.date);
+      if (!editingId) $("f-date").value = defaultDateForView();
+    }
+    renderAll();
+  }
+  $("import-btn").addEventListener("click", () => {
+    const res = importCSV($("import-text").value);
+    importReport(res);
+    if (!res.error && (res.added || res.dups)) $("import-text").value = "";
+  });
+  $("import-file").addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { importReport(importCSV(r.result)); e.target.value = ""; };
+    r.onerror = () => { importReport({ error: "Не удалось прочитать файл. Попробуйте открыть его в Блокноте и вставить текст в поле ниже." }); e.target.value = ""; };
+    r.readAsText(f, "UTF-8");
+  });
+
+  /* ---------- Theme ---------- */
+  const THEMES = [["auto", "авто"], ["light", "светлая"], ["dark", "тёмная"]];
+  let theme = "auto";
+  try { theme = localStorage.getItem(THEME_KEY) || "auto"; } catch (e) {}
+  function applyTheme() {
+    const root = document.documentElement;
+    if (theme === "auto") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", theme);
+    $("theme-btn").textContent = "Тема: " + (THEMES.find((t) => t[0] === theme) || THEMES[0])[1];
+  }
+  $("theme-btn").addEventListener("click", () => {
+    const i = THEMES.findIndex((t) => t[0] === theme);
+    theme = THEMES[(i + 1) % THEMES.length][0];
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+    applyTheme();
+  });
+  if (theme !== "auto") applyTheme(); else $("theme-btn").textContent = "Тема: авто";
+
+  /* ---------- Start ---------- */
+  renderAll();
+  resetForm();
+  initDownload();
+})();
+</script>
+</body>
+</html>
