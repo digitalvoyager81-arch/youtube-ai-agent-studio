@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Studio – four AI agents turn a topic into a finished YouTube video</title>
+<meta name="description" content="Give Agent Studio a topic. A research, script, thumbnail and render agent hand the work along until a video is ready to upload.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--ink:#fff;--muted:#a3a3a3;--accent:#dafa9c;--accent-ink:#0f0f0f;
+  --field-1:#fff;--field-1-ink:#0f0f0f;--field-2:#dafa9c;--field-2-ink:#0f0f0f;
+  --step-small:clamp(.8125rem,.79rem + .1vw,.875rem);
+  --step-body:clamp(1.0625rem,1rem + .25vw,1.1875rem);
+  --step-lead:clamp(1.25rem,1.1rem + .7vw,1.625rem);
+  --step-head:clamp(2rem,1.3rem + 3.2vw,4rem);
+  --m:clamp(16px,2.8vw,40px);--r:0;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:400 var(--step-body)/1.5 "Albert Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-weight:600;letter-spacing:-.035em;line-height:1.02}
+h1{font-size:clamp(40px,5.2vw,80px);max-width:12ch}
+h2{font-size:clamp(28px,2.8vw,40px)}
+p{max-width:46ch}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{padding-inline:var(--m)}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;background:var(--accent);color:var(--accent-ink);font:500 var(--step-small)/1 inherit;font-size:16px;border:0;border-radius:var(--r);text-decoration:none;cursor:pointer;transition:transform .15s var(--ease)}
+.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0) scale(.98)}
+.small{font-size:var(--step-small);color:var(--muted)}
+section{padding-block:clamp(72px,9vw,160px)}
+/* nav */
+nav{display:flex;justify-content:space-between;align-items:center;padding:28px var(--m) 0}
+nav b{font-weight:600;font-size:18px;letter-spacing:-.02em}
+nav ul{display:flex;gap:clamp(16px,3vw,36px);list-style:none;padding:0;font-size:15px}
+nav a{text-decoration:none;display:inline-block;padding:10px 0}nav a:hover{text-decoration:underline}
+@media(max-width:640px){nav ul li:nth-child(n+3){display:none}}
+/* hero */
+.hero{padding:clamp(56px,10vw,150px) 0 0;overflow:hidden}
+.hero .copy{padding-inline:var(--m)}
+.hero p.lead{margin:24px 0 28px;font-size:18px;max-width:40ch}
+.stage{overflow:hidden;margin:clamp(40px,6vw,88px) 0 0 clamp(16px,34vw,36vw);background:var(--accent);padding:clamp(16px,4vw,56px) 0 0 clamp(16px,4vw,56px);clip-path:polygon(0 0,0 0,0 0,0 0);min-height:clamp(560px,48vw,640px);color:var(--field-2-ink)}
+.stage.open{animation:shutter 1.1s var(--ease) forwards}
+@keyframes shutter{from{clip-path:polygon(0 0,0 0,0 100%,0 100%)}to{clip-path:polygon(48px 0,100% 0,100% 100%,0 100%,0 48px)}}
+@media(max-width:700px){.stage{overflow:hidden;margin-left:0}@keyframes shutter{from{clip-path:polygon(0 0,0 0,0 100%,0 100%)}to{clip-path:polygon(40px 0,100% 0,100% 100%,0 100%,0 40px)}}}
+/* product fragments */
+[data-ui]{font-size:15px;line-height:1.4;color:var(--ink)}
+.panel{background:var(--bg);width:min(640px,100%);padding:20px;border-radius:8px 0 0 0}
+.panel label{display:block;color:var(--muted);font-size:13px;margin-bottom:6px}
+.panel input{width:100%;min-height:44px;background:var(--surface);border:1px solid #3a3a3a;border-radius:6px;color:var(--ink);font:500 16px inherit;padding:0 14px}
+.panel .go{margin-top:12px}
+.agents{list-style:none;padding:0;margin-top:20px;display:grid;gap:8px}
+.agents li{background:var(--surface);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:20px 1fr;gap:4px 12px}
+.agents .dot{width:10px;height:10px;border-radius:50%;background:#555;margin-top:6px;transition:background .3s}
+.agents li.done .dot{background:var(--accent)}
+.agents strong{font-weight:500;font-size:15px}
+.agents span.out{grid-column:2;color:var(--muted);font-size:14px}
+.agents li.done span.out{color:var(--ink)}
+/* features */
+.features .plate{display:grid;grid-template-columns:repeat(12,1fr);gap:0 24px;align-items:start}
+.features h2{grid-column:1/5;text-align:right}
+.features .col-l{grid-column:1/5;display:grid;gap:56px;text-align:right;margin-top:56px}
+.features .col-r{grid-column:9/13;display:grid;gap:56px;margin-top:56px}
+.features{overflow-x:clip}.features .mid{grid-column:5/9;grid-row:1/3;width:100%;max-width:400px;justify-self:center;background:var(--surface);padding:20px;display:grid;gap:10px;align-content:start;}
+.note{max-width:24ch}.note b{display:block;font-weight:500;font-size:18px}.note span{font-size:15px;color:var(--muted)}
+.col-l .note{margin-left:auto}
+.mid .ctl{background:var(--bg);padding:12px 14px;border-radius:6px;font-size:14px;display:flex;justify-content:space-between;gap:12px;transition:outline-color .2s;outline:2px solid transparent;cursor:default}
+.mid .ctl em{font-style:normal;color:var(--muted)}
+.mid .ctl.on{outline-color:var(--accent)}
+@media(max-width:900px){.features .plate{display:block}.features h2{text-align:left}.features .mid{margin:32px 0;max-width:none}.features .col-l,.features .col-r{text-align:left;margin-top:32px}.col-l .note{margin-left:0}}
+/* how */
+.how{background:var(--field-1);color:var(--field-1-ink)}
+.how .col{max-width:560px;margin-left:clamp(0px,25vw,28vw)}
+.how h2{margin-bottom:56px}
+.how .step{margin-bottom:88px}.how .step:last-child{margin-bottom:0}
+.how .step>p{font-size:20px;font-weight:500;max-width:none}
+.call{background:#ececec;border-radius:8px;padding:20px;margin-top:16px;font-size:16px}
+.resp{background:var(--bg);color:var(--ink);margin:16px 0 0 56px;padding:20px;border-radius:8px}
+.resp.wide{margin-left:56px;width:min(760px,calc(100vw - 25vw - 56px - var(--m)))}
+.resp ul{padding-left:18px}
+@media(max-width:900px){.how .col{margin-left:0}.resp{margin-left:0}.resp.wide{margin-left:0;width:auto}}
+@media(max-width:700px){.how .col{margin-left:0}.resp,.resp.wide{margin-left:0;width:auto}}
+/* showcase */
+.show{position:relative;overflow:hidden;min-height:78svh;padding:var(--m);background:var(--field-2);color:var(--field-2-ink);transition:background .4s,color .4s}
+.show.alt{background:var(--field-1)}
+.show h2{max-width:14ch}.show p{margin-top:16px;font-size:17px;max-width:34ch}
+.seg{position:absolute;right:-6vw;bottom:-6vh;font-size:min(9.2vh,7vw);display:flex;background:var(--bg);border-radius:.6em;padding:.12em;gap:.08em}
+.seg button{font:600 1em/1 inherit;font-size:1em;background:transparent;color:var(--muted);border:0;border-radius:.5em;padding:.5em .9em;cursor:pointer;transition:background .25s,color .25s}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+@media(max-width:900px){.seg{right:var(--m);bottom:6vh;font-size:min(8vh,11vw)}}
+@media(max-width:700px){.seg{font-size:11vw;left:var(--m);right:auto;bottom:6vh}}
+/* pricing */
+.pricing h2{margin-bottom:56px}
+table{width:100%;border-collapse:collapse;font-size:clamp(16px,1.6vw,22px);text-align:left}
+th,td{padding:20px 16px 20px 0;vertical-align:top;font-weight:400}
+th{font-weight:600;font-size:clamp(22px,3vw,44px);letter-spacing:-.03em}
+th small{display:block;font-weight:400;font-size:16px;color:var(--muted)}
+tbody tr:nth-child(odd) th,tbody tr:nth-child(odd) td{background:var(--surface)}
+td:first-child,th:first-child{padding-left:0}
+.rec{background:var(--accent)!important;color:var(--accent-ink)!important}
+.rec small{color:var(--accent-ink)}
+.rec{padding-left:16px}
+td{padding-left:16px}
+.btn.d{background:var(--ink);color:var(--bg)}
+@media(max-width:800px){.pricing .tbl{display:none}}
+.pricing .stack{display:none}
+@media(max-width:800px){.pricing .stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}.stack>div{padding:24px 16px;background:var(--surface)}.stack>div.rec{background:var(--accent)!important}.stack h3{font-size:9vw}.stack dl{margin:20px 0 0}.stack .btn{margin-top:16px}.stack dt{color:var(--muted);font-size:17px}.stack dd{font-size:17px;margin-bottom:10px}.stack .rec dt{color:var(--accent-ink)}}
+/* faq */
+.faq{background:var(--field-1);color:var(--field-1-ink)}
+.faq .grid{display:grid;grid-template-columns:5fr 1fr 6fr;gap:0}
+.faq ul{list-style:none;padding:0;display:grid;gap:6px}
+.faq li button{background:none;border:0;font:inherit;font-size:18px;color:#6b6b6b;display:flex;align-items:center;gap:12px;text-align:left;padding:8px 0;cursor:pointer;min-height:44px}
+.faq li button::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#bbb}
+.faq li button[aria-selected=true]{color:var(--field-1-ink)}
+.faq li button[aria-selected=true]::before{background:#6aa800}
+.faq .ans{grid-column:3;font-weight:400;position:sticky;top:120px;align-self:start;font-size:clamp(22px,2.2vw,28px);line-height:1.3;max-width:30ch;transition:opacity .15s}
+.faq .head{color:#6b6b6b;font-size:18px;padding:8px 0}
+@media(max-width:800px){.faq .grid{display:block}.faq .ans{position:static;margin:8px 0 16px 20px;font-size:19px;max-width:none}.faq ul{max-width:none}}
+/* cta */
+.cta{padding-block:18svh 14svh;display:grid;grid-template-columns:1fr 1fr;gap:var(--m);align-items:start}.cta .done{background:var(--surface);padding:20px;border-radius:8px;justify-self:end;width:min(420px,100%)}.cta .done b{font-weight:500;display:block;margin-bottom:8px}.cta .done li{margin-left:18px}@media(max-width:600px){.cta{display:block}.cta .done{margin-top:32px;justify-self:auto}}
+.cta p{font-size:20px;max-width:34ch;margin-bottom:24px}
+/* footer */
+footer{padding:8px;display:grid;grid-template-columns:repeat(12,1fr);gap:8px}
+footer>div,footer>a{background:var(--surface);padding:20px;min-height:220px;font-size:16px;display:flex;flex-direction:column;justify-content:space-between}
+.t1{grid-column:1/5;font-size:24px!important}.t2{grid-column:5/8}.t3{grid-column:8/10}.t4{grid-column:10/13;text-decoration:none}
+.t5{grid-column:1/9;background:var(--ink)!important;color:var(--bg);min-height:320px;align-items:center;justify-content:center;font-size:9vw!important;font-weight:600;letter-spacing:-.05em}
+.t6{grid-column:9/13;background:var(--accent)!important;color:var(--accent-ink);min-height:320px;font-size:28px!important;text-decoration:none;font-weight:600;letter-spacing:-.03em}
+footer ul{list-style:none;padding:0}footer li a{text-decoration:none;display:inline-block;padding:4px 0}
+footer svg{width:48px;height:48px;align-self:flex-end}
+@media(max-width:800px){footer>div,footer>a{grid-column:span 12;min-height:140px}.t2,.t4{grid-column:span 6}.t3,.t1{grid-column:span 6}.t5{font-size:18vw!important}}
+/* motion */
+.rise{opacity:1;transform:none}
+.js .rise{opacity:0;transform:translateY(24px);transition:opacity .6s var(--ease),transform .6s var(--ease);transition-delay:var(--d,0ms)}
+.js .rise.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.stage.open{animation:none;clip-path:polygon(48px 0,100% 0,100% 100%,0 100%,0 48px)}.js .rise{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}.btn,.seg button{transition:none}}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js')</script>
+
+<nav aria-label="Main">
+  <b>Agent Studio</b>
+  <ul>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#faq">Questions</a></li>
+  </ul>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="copy">
+    <h1>Topic in, video out</h1>
+    <p class="lead">Four AI agents research, script, design the thumbnail and render your YouTube video, then hand you the finished file.</p>
+    <a class="btn" href="#cta">Start a video</a>
+  </div>
+  <div class="stage" id="stage">
+    <div class="panel" data-ui id="run">
+      <label for="topic">Video topic</label>
+      <input id="topic" value="How to start a faceless history channel" autocomplete="off">
+      <button class="btn go" id="runbtn" type="button">Run the agents</button>
+      <ol class="agents" id="agents" aria-live="polite">
+        <li data-a="research"><i class="dot"></i><strong>Research agent</strong><span class="out">Waiting for a topic</span></li>
+        <li data-a="script"><i class="dot"></i><strong>Script agent</strong><span class="out">Waiting</span></li>
+        <li data-a="thumb"><i class="dot"></i><strong>Thumbnail agent</strong><span class="out">Waiting</span></li>
+        <li data-a="render"><i class="dot"></i><strong>Render agent</strong><span class="out">Waiting</span></li>
+      </ol>
+    </div>
+  </div>
+</header>
+
+<section class="features wrap" id="pipeline">
+  <div class="plate">
+    <h2 class="rise">One run board</h2>
+    <div class="col-l">
+      <div class="note rise" data-c="0"><b>Topic</b><span>One line is the whole brief. Everything downstream reads it.</span></div>
+      <div class="note rise" data-c="1"><b>Research</b><span>Finds what already works in your niche and what is missing.</span></div>
+      <div class="note rise" data-c="2"><b>Script</b><span>A hook, three beats and an ending, written to hold attention.</span></div>
+    </div>
+    <div class="mid" data-ui aria-label="Run board panel">
+      <div class="ctl" data-c="0">Topic <em>History, faceless</em></div>
+      <div class="ctl" data-c="1">Research <em>12 competitors</em></div>
+      <div class="ctl" data-c="2">Script <em>8 min</em></div>
+      <div class="ctl" data-c="3">Thumbnail <em>3 variants</em></div>
+      <div class="ctl" data-c="4">Render <em>1080p</em></div>
+      <div class="ctl" data-c="5">Upload <em>Draft</em></div>
+    </div>
+    <div class="col-r">
+      <div class="note rise" data-c="3"><b>Thumbnail</b><span>Three variants with three words or fewer on each.</span></div>
+      <div class="note rise" data-c="4"><b>Render</b><span>Scenes become a video file with captions and music.</span></div>
+      <div class="note rise" data-c="5"><b>Upload</b><span>Lands in your channel as a draft. You press publish.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="col">
+      <h2>How it works</h2>
+      <div class="step rise">
+        <p>First, give it a topic.</p>
+        <div class="call">How to start a faceless history channel</div>
+        <div class="resp" data-ui>The research agent returns the gaps in your niche and a title angle.</div>
+      </div>
+      <div class="step rise">
+        <p>Then check the script.</p>
+        <div class="call">Shorter hook, more story in beat two</div>
+        <div class="resp" data-ui>The script agent rewrites the hook and keeps the length at 8 minutes.</div>
+      </div>
+      <div class="step rise">
+        <p>Finally, approve the render.</p>
+        <div class="call">Looks good, render it</div>
+        <div class="resp wide" data-ui>
+          <b>Ready to upload</b>
+          <ul><li>Video, 1080p, with captions</li><li>Three thumbnail variants</li><li>Title and description</li></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="show" id="show" aria-labelledby="sh">
+  <h2 id="sh">Pick the <span id="shword">format</span></h2>
+  <p>Long videos and Shorts come from the same topic. Switch the format and the whole run follows it.</p>
+  <div class="seg" data-ui role="group" aria-label="Format">
+    <button type="button" aria-pressed="true" data-w="long video">Long</button>
+    <button type="button" aria-pressed="false" data-w="Short">Short</button>
+  </div>
+</section>
+
+<section class="pricing wrap" id="pricing">
+  <h2>Pricing</h2>
+  <div class="tbl">
+  <table>
+    <thead><tr><th scope="col">Plans</th><th scope="col">Solo<small>$29 a month</small></th><th scope="col" class="rec">Channel<small>$79 a month</small></th><th scope="col">Studio<small>$199 a month</small></th></tr></thead>
+    <tbody>
+      <tr><th scope="row" style="font-size:inherit;font-weight:400">Videos each month</th><td>4</td><td class="rec">16</td><td>Unlimited</td></tr>
+      <tr><th scope="row" style="font-size:inherit;font-weight:400">Channels</th><td>1</td><td class="rec">3</td><td>10</td></tr>
+      <tr><th scope="row" style="font-size:inherit;font-weight:400">Shorts</th><td>Not included</td><td class="rec">Unlimited</td><td>Unlimited</td></tr>
+      <tr><th scope="row" style="font-size:inherit;font-weight:400">Seats</th><td>1</td><td class="rec">3</td><td>10</td></tr>
+      <tr><th scope="row"><span class="sr" style="position:absolute;left:-9999px">Choose a plan</span></th><td><a class="btn d" href="#cta">Choose Solo</a></td><td class="rec"><a class="btn d" href="#cta">Choose Channel</a></td><td><a class="btn d" href="#cta">Choose Studio</a></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="stack">
+    <div><h3>Solo</h3><p>$29 a month</p><a class="btn d" href="#cta">Choose Solo</a><dl><dt>Videos each month</dt><dd>4</dd><dt>Channels</dt><dd>1</dd><dt>Shorts</dt><dd>Not included</dd></dl></div>
+    <div class="rec"><h3>Channel</h3><p>$79 a month</p><a class="btn d" href="#cta">Choose Channel</a><dl><dt>Videos each month</dt><dd>16</dd><dt>Channels</dt><dd>3</dd><dt>Shorts</dt><dd>Unlimited</dd></dl></div>
+    <div><h3>Studio</h3><p>$199 a month</p><a class="btn d" href="#cta">Choose Studio</a><dl><dt>Videos each month</dt><dd>Unlimited</dd><dt>Channels</dt><dd>10</dd><dt>Shorts</dt><dd>Unlimited</dd></dl></div>
+  </div>
+  <p class="small" style="margin-top:24px">Sample plans for this demo. Prices are placeholders.</p>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap grid">
+    <div>
+      <div class="head">Questions</div>
+      <ul role="tablist" aria-label="Questions" id="qs"></ul>
+    </div>
+    <p class="ans" id="ans" role="tabpanel" aria-live="polite"></p>
+  </div>
+</section>
+
+<section class="cta wrap" id="cta">
+  <div><p>Tell us your channel and your first topic, and we will set up your first run.</p>
+  <a class="btn" href="mailto:hello@example.com?subject=First%20run&body=Channel%3A%0ATopic%3A">Start a video</a></div>
+  <div class="done" data-ui><b>Your first run includes</b><ul><li>Research on your niche</li><li>An 8 minute script</li><li>Three thumbnails</li><li>A rendered 1080p video</li></ul></div>
+</section>
+</main>
+
+<footer>
+  <div class="t1"><p>One topic in, one finished video out.</p><span class="small">Demo page. Sample content.</span></div>
+  <div class="t2"><ul><li><a href="#pipeline">Pipeline</a></li><li><a href="#how">How it works</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#faq">Questions</a></li></ul></div>
+  <div class="t3"><span>Your timezone</span><span id="clock"></span></div>
+  <a class="t4" href="mailto:hello@example.com"><span></span><span>hello@example.com</span></a>
+  <div class="t5">Agent Studio</div>
+  <a class="t6" href="#cta"><span>Start a video</span><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" aria-hidden="true"><path d="M8 40L40 8M16 8h24v24"/></svg></a>
+</footer>
+
+<script>
+(function(){
+  var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return [].slice.call((c||document).querySelectorAll(s))};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // shutter
+  requestAnimationFrame(function(){$('#stage').classList.add('open')});
+  // reveals: staggered by order inside each section
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
+  $$('.rise').forEach(function(el,i){el.style.setProperty('--d',(i%3)*80+'ms');io.observe(el)});
+  // live run board (sample output computed from the topic in the browser)
+  function words(t){return t.trim().replace(/\s+/g,' ')}
+  function plan(topic){
+    var t=words(topic)||'your topic', short=t.split(' ').slice(0,3).join(' ');
+    return {
+      research:'Finds 12 channels covering "'+short+'" and 3 gaps nobody has covered yet.',
+      script:'Hook in 15 seconds, three beats, one ending. About 8 minutes for "'+t+'".',
+      thumb:'3 variants. Text: "'+short.split(' ').slice(0,2).join(' ')+'?", "Start here", "Do this first".',
+      render:'1080p, captions on, music bed. Estimated render time: 6 minutes.'
+    };
+  }
+  var running=false;
+  function run(){
+    if(running)return;running=true;
+    var p=plan($('#topic').value);
+    var items=$$('#agents li');
+    items.forEach(function(li){li.classList.remove('done');$('.out',li).textContent='Waiting'});
+    items.forEach(function(li,i){
+      setTimeout(function(){
+        li.classList.add('done');$('.out',li).textContent=p[li.dataset.a];
+        if(i===items.length-1)running=false;
+      },reduce?0:(i+1)*650);
+    });
+  }
+  $('#runbtn').addEventListener('click',run);
+  $('#topic').addEventListener('keydown',function(e){if(e.key==='Enter')run()});
+  // panel notes highlight controls
+  $$('.note').forEach(function(n){
+    function on(v){$$('.mid .ctl').forEach(function(c){c.classList.toggle('on',v&&c.dataset.c===n.dataset.c)})}
+    n.tabIndex=0;
+    n.addEventListener('mouseenter',function(){on(true)});n.addEventListener('mouseleave',function(){on(false)});
+    n.addEventListener('focus',function(){on(true)});n.addEventListener('blur',function(){on(false)});
+  });
+  // showcase control
+  $$('.seg button').forEach(function(b){b.addEventListener('click',function(){
+    $$('.seg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+    $('#shword').textContent=b.dataset.w;
+    $('#show').classList.toggle('alt',b.dataset.w==='Short');
+  })});
+  // faq
+  var Q=[
+    ['Do I need to be on camera?','No. Narration, footage and captions are made for you.'],
+    ['Which tools do the agents use?','Research reads public channel data. Rendering uses HyperFrames or Remotion.'],
+    ['Can I edit the script?','Yes. Every step waits for your approval.'],
+    ['Does it publish for me?','It uploads a draft. You decide when it goes live.'],
+    ['What does a video cost?','Each plan includes a set number of videos a month.']
+  ];
+  var ul=$('#qs'),ans=$('#ans');
+  function sel(i){$$('button',ul).forEach(function(b,j){b.setAttribute('aria-selected',i===j)});ans.style.opacity=0;setTimeout(function(){ans.textContent=Q[i][1];ans.style.opacity=1},reduce?0:150)}
+  Q.forEach(function(q,i){var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=q[0];
+    ['mouseenter','focus','click'].forEach(function(ev){b.addEventListener(ev,function(){sel(i)})});li.appendChild(b);ul.appendChild(li)});
+  sel(0);
+  // clock
+  function tick(){$('#clock').textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+  tick();setInterval(tick,30000);
+})();
+</script>
+</body>
+</html>
