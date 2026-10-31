@@ -17,7 +17,7 @@
   --step-lead:clamp(1.25rem,1.1rem + .7vw,1.625rem);
   --step-head:clamp(2rem,1.3rem + 3.2vw,4rem);
   --m:clamp(16px,2.8vw,40px);--r:0;
-  --ease:cubic-bezier(.2,.7,.2,1);
+  --ease:cubic-bezier(.23,1,.32,1);
 }
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
@@ -29,8 +29,9 @@ p{max-width:46ch}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .wrap{padding-inline:var(--m)}
-.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;background:var(--accent);color:var(--accent-ink);font:500 var(--step-small)/1 inherit;font-size:16px;border:0;border-radius:var(--r);text-decoration:none;cursor:pointer;transition:transform .15s var(--ease)}
-.btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0) scale(.98)}
+.btn{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;background:var(--accent);color:var(--accent-ink);font:500 var(--step-small)/1 inherit;font-size:16px;border:0;border-radius:var(--r);text-decoration:none;cursor:pointer;transition:transform .16s var(--ease)}
+@media(hover:hover) and (pointer:fine){.btn:hover{transform:translateY(-2px)}}
+.btn:active{transform:scale(.97);transition-duration:100ms}
 .small{font-size:var(--step-small);color:var(--muted)}
 section{padding-block:clamp(72px,9vw,160px)}
 /* nav */
@@ -54,9 +55,9 @@ nav a{text-decoration:none;display:inline-block;padding:10px 0}nav a:hover{text-
 .panel input{width:100%;min-height:44px;background:var(--surface);border:1px solid #3a3a3a;border-radius:6px;color:var(--ink);font:500 16px inherit;padding:0 14px}
 .panel .go{margin-top:12px}
 .agents{list-style:none;padding:0;margin-top:20px;display:grid;gap:8px}
-.agents li{background:var(--surface);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:20px 1fr;gap:4px 12px}
+.agents li{transition:transform .25s var(--ease);background:var(--surface);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:20px 1fr;gap:4px 12px}
 .agents .dot{width:10px;height:10px;border-radius:50%;background:#555;margin-top:6px;transition:background .3s}
-.agents li.done .dot{background:var(--accent)}
+.agents li.done .dot{background:var(--accent);transform:scale(1.15)}.agents .dot{transition:background .2s var(--ease),transform .2s var(--ease)}
 .agents strong{font-weight:500;font-size:15px}
 .agents span.out{grid-column:2;color:var(--muted);font-size:14px}
 .agents li.done span.out{color:var(--ink)}
@@ -89,7 +90,7 @@ nav a{text-decoration:none;display:inline-block;padding:10px 0}nav a:hover{text-
 .show.alt{background:var(--field-1)}
 .show h2{max-width:14ch}.show p{margin-top:16px;font-size:17px;max-width:34ch}
 .seg{position:absolute;right:-6vw;bottom:-6vh;font-size:min(9.2vh,7vw);display:flex;background:var(--bg);border-radius:.6em;padding:.12em;gap:.08em}
-.seg button{font:600 1em/1 inherit;font-size:1em;background:transparent;color:var(--muted);border:0;border-radius:.5em;padding:.5em .9em;cursor:pointer;transition:background .25s,color .25s}
+.seg button:active{transform:scale(.97)}.seg button{font:600 1em/1 inherit;font-size:1em;background:transparent;color:var(--muted);border:0;border-radius:.5em;padding:.5em .9em;cursor:pointer;transition:background .2s var(--ease),color .2s var(--ease),transform .12s var(--ease)}
 .seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 @media(max-width:900px){.seg{right:var(--m);bottom:6vh;font-size:min(8vh,11vw)}}
 @media(max-width:700px){.seg{font-size:11vw;left:var(--m);right:auto;bottom:6vh}}
@@ -117,7 +118,7 @@ td{padding-left:16px}
 .faq li button::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:#bbb}
 .faq li button[aria-selected=true]{color:var(--field-1-ink)}
 .faq li button[aria-selected=true]::before{background:#6aa800}
-.faq .ans{grid-column:3;font-weight:400;position:sticky;top:120px;align-self:start;font-size:clamp(22px,2.2vw,28px);line-height:1.3;max-width:30ch;transition:opacity .15s}
+.faq .ans{grid-column:3;font-weight:400;position:sticky;top:120px;align-self:start;font-size:clamp(22px,2.2vw,28px);line-height:1.3;max-width:30ch;transition:opacity .12s ease-out}
 .faq .head{color:#6b6b6b;font-size:18px;padding:8px 0}
 @media(max-width:800px){.faq .grid{display:block}.faq .ans{position:static;margin:8px 0 16px 20px;font-size:19px;max-width:none}.faq ul{max-width:none}}
 /* cta */
@@ -134,7 +135,7 @@ footer svg{width:48px;height:48px;align-self:flex-end}
 @media(max-width:800px){footer>div,footer>a{grid-column:span 12;min-height:140px}.t2,.t4{grid-column:span 6}.t3,.t1{grid-column:span 6}.t5{font-size:18vw!important}}
 /* motion */
 .rise{opacity:1;transform:none}
-.js .rise{opacity:0;transform:translateY(24px);transition:opacity .6s var(--ease),transform .6s var(--ease);transition-delay:var(--d,0ms)}
+.js .rise{opacity:0;transform:translateY(24px);transition:opacity .5s var(--ease),transform .5s var(--ease);transition-delay:var(--d,0ms)}
 .js .rise.in{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){.stage.open{animation:none;clip-path:polygon(48px 0,100% 0,100% 100%,0 100%,0 48px)}.js .rise{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}.btn,.seg button{transition:none}}
 </style>
@@ -289,7 +290,7 @@ footer svg{width:48px;height:48px;align-self:flex-end}
   requestAnimationFrame(function(){$('#stage').classList.add('open')});
   // reveals: staggered by order inside each section
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.15});
-  $$('.rise').forEach(function(el,i){el.style.setProperty('--d',(i%3)*80+'ms');io.observe(el)});
+  $$('.rise').forEach(function(el,i){el.style.setProperty('--d',(i%3)*60+'ms');io.observe(el)});
   // live run board (sample output computed from the topic in the browser)
   function words(t){return t.trim().replace(/\s+/g,' ')}
   function plan(topic){
@@ -338,9 +339,9 @@ footer svg{width:48px;height:48px;align-self:flex-end}
     ['What does a video cost?','Each plan includes a set number of videos a month.']
   ];
   var ul=$('#qs'),ans=$('#ans');
-  function sel(i){$$('button',ul).forEach(function(b,j){b.setAttribute('aria-selected',i===j)});ans.style.opacity=0;setTimeout(function(){ans.textContent=Q[i][1];ans.style.opacity=1},reduce?0:150)}
+  function sel(i,instant){$$('button',ul).forEach(function(b,j){b.setAttribute('aria-selected',i===j)});if(!instant&&!reduce)ans.style.opacity=0;if(instant||reduce){ans.textContent=Q[i][1];ans.style.opacity=1}else{setTimeout(function(){ans.textContent=Q[i][1];ans.style.opacity=1},120)}}
   Q.forEach(function(q,i){var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.textContent=q[0];
-    ['mouseenter','focus','click'].forEach(function(ev){b.addEventListener(ev,function(){sel(i)})});li.appendChild(b);ul.appendChild(li)});
+    b.addEventListener('mouseenter',function(){sel(i)});b.addEventListener('click',function(){sel(i)});b.addEventListener('focus',function(){sel(i,true)});li.appendChild(b);ul.appendChild(li)});
   sel(0);
   // clock
   function tick(){$('#clock').textContent=new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}

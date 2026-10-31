@@ -1,2 +1,4 @@
 .taste-skill/
 __pycache__/
+video/.hyperframes/
+video/node_modules/
