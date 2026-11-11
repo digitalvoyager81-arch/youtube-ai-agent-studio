@@ -1,0 +1,35 @@
+{
+  "name": "mira-lighthouse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Мира и Пых — 3D-мультик (9:16, 60 сек), Remotion + Three.js",
+  "scripts": {
+    "dev": "remotion studio",
+    "music": "bash scripts/make_music.sh",
+    "render": "remotion render MiraLighthouse out/mira-lighthouse.mp4 --concurrency=2",
+    "still": "remotion still MiraLighthouse"
+  },
+  "overrides": {
+    "@babel/types": "7.29.0",
+    "@babel/parser": "7.29.0",
+    "@babel/traverse": "7.29.0",
+    "@babel/generator": "7.29.0",
+    "@babel/core": "7.29.0",
+    "@babel/helpers": "7.28.6",
+    "@babel/template": "7.28.6"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/three": "^0.170.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^8.18.0",
+    "@remotion/cli": "^4.0.543",
+    "@remotion/three": "^4.0.543",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.543",
+    "three": "^0.170.0"
+  }
+}
