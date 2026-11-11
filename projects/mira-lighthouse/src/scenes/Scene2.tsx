@@ -35,10 +35,10 @@ export const Scene2: React.FC = () => {
   if (f > 92) pyhPos = shoulder;
   const point = seg(f, 140, 165) * (1 - seg(f, 250, 275));
 
-  const camBase: [number, number, number] = [miraPos[0] + 0.7, miraPos[1] + 1.0, miraPos[2] + 3.4];
+  const camBase: [number, number, number] = [miraPos[0] + 0.7, miraPos[1] + 1.55, miraPos[2] + 3.2];
   const camPos = lerp3([0.75, 0.9, 3.0], camBase, seg(f, 95, 130));
   camPos[0] += Math.sin(f * 0.02) * 0.04;
-  const camTarget: [number, number, number] = [miraPos[0] - 0.6, miraPos[1] + 0.7, miraPos[2] - 1.5];
+  const camTarget: [number, number, number] = [miraPos[0] - 0.6, miraPos[1] + 0.55 - walkAmt * 0.1, miraPos[2] - 1.5];
 
   const spray = (seed: number, period: number, origin: [number, number, number]) => {
     const r = rng(seed);
@@ -85,7 +85,7 @@ export const Scene2: React.FC = () => {
       <Sea frame={f} y={-5} position={[-30, 0, 0]} color="#0a2a36" amp={0.7} speed={1.4} size={260} segments={110} emissive="#0b4450" emissiveIntensity={0.25} roughness={0.85} />
 
       {/* slope / path */}
-      <group rotation={[-Math.atan(0.18), 0, 0]}>
+      <group rotation={[Math.atan(0.18), 0, 0]}>
         <Rock seed={30} position={[0.6, -1.6, -2]} scale={[4.5, 1.6, 12]} color="#5a5056" rough={0.1} />
         <Rock seed={31} position={[-1.7, 0.0, -1]} scale={[0.6, 0.45, 0.6]} color="#6a5c5f" />
         <Rock seed={32} position={[1.8, 0.05, 1.5]} scale={[0.55, 0.5, 0.5]} color="#625558" />
